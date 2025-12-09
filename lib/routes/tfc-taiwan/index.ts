@@ -1,7 +1,6 @@
-import type { Route } from '@/types';
+import { Route } from '@/types';
 import ofetch from '@/utils/ofetch';
-
-import { baseUrl, parseItem, parsePost } from './utils';
+import { baseUrl, parsePost, parseItem } from './utils';
 
 const handler = async (ctx) => {
     const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : undefined;

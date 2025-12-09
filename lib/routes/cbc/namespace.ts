@@ -1,7 +1,7 @@
 import type { Namespace } from '@/types';
 
 export const namespace: Namespace = {
-    name: 'Canadian Broadcasting Corporation',
-    url: 'cbc.ca',
-    lang: 'en',
+    name: 'Central Bank of the Republic of China (Taiwan)',
+    url: 'cbc.gov.tw',
+    lang: 'zh-TW',
 };

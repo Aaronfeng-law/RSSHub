@@ -1,8 +1,6 @@
-import { load } from 'cheerio';
-
-import type { Route } from '@/types';
-import cache from '@/utils/cache';
+import { Route } from '@/types';
 import got from '@/utils/got';
+import { load } from 'cheerio';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -30,48 +28,30 @@ export const route: Route = {
 };
 
 async function handler() {
-    const rootUrl = 'https://www.mohw.gov.tw';
-    const currentUrl = `${rootUrl}/lp-17-1.html`;
+    const currentUrl = 'https://www.mohw.gov.tw/rss-17-1.html';
 
     const response = await got({
         method: 'get',
         url: currentUrl,
     });
 
-    const $ = load(response.data);
+    const $ = load(response.data, { xmlMode: true });
 
-    let items = $('.list01 a[title]')
+    const items = $('item')
         .toArray()
         .map((item) => {
-            item = $(item);
-
+            const $item = $(item);
             return {
-                title: item.text(),
-                link: item.attr('href'),
+                title: $item.find('title').text(),
+                link: $item.find('link').text(),
+                description: $item.find('description').text(),
+                pubDate: parseDate($item.find('pubDate').text()),
             };
         });
 
-    items = await Promise.all(
-        items.map((item) =>
-            cache.tryGet(item.link, async () => {
-                const detailResponse = await got({
-                    method: 'get',
-                    url: item.link,
-                });
-
-                const content = load(detailResponse.data);
-
-                item.description = content('article').html();
-                item.pubDate = parseDate(content('meta[name="DC.Date"]').attr('datetime'));
-
-                return item;
-            })
-        )
-    );
-
     return {
-        title: '即時新聞澄清 - 台灣衛生福利部',
-        link: currentUrl,
+        title: $('channel title').text() || '即時新聞澄清 - 台灣衛生福利部',
+        link: $('channel link').text() || currentUrl,
         item: items,
     };
 }
