@@ -16,6 +16,16 @@
 *.swp
 *.iml
 
+# Compiled TypeScript files
+*.d.ts
+*.d.ts.map
+*.js.map
+lib/**/*.js
+scripts/**/*.js
+scripts/**/*.d.ts
+plugins/**/*.js
+plugins/**/*.d.ts
+
 app-minimal/
 assets/build/
 coverage
@@ -35,3 +45,9 @@ package-lock.json
 # pnpm-lock.yaml
 yarn.lock
 yarn-error.log
+
+# Keep essential JS config files
+!babel.config.js
+!tailwind.config.js
+!eslint.config.mjs
+!.puppeteerrc.cjs

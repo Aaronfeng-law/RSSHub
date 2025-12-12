@@ -1,54 +1,8 @@
-import { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import got from '@/utils/got';
 import { load } from 'cheerio';
 
-const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
-
-    const rootUrl = 'https://www.ncc.gov.tw';
-    const currentUrl = new URL('rss.ashx', rootUrl).href;
-
-    const { data: response } = await got(currentUrl);
-
-    const $ = load(response, { xml: true });
-
-    const items = $('item')
-        .slice(0, limit)
-        .toArray()
-        .map((item) => {
-            const $item = $(item);
-
-            const title = $item.find('title').text();
-            const link = $item.find('link').text();
-            const description = $item.find('description').text();
-            const author = $item.find('author').text();
-            const pubDate = $item.find('pubDate').text();
-
-            return {
-                title,
-                link,
-                description,
-                author,
-                pubDate: parseDate(pubDate),
-            };
-        });
-
-    const author = '國家通訊傳播委員會';
-    const title = $('channel title').first().text();
-    const description = $('channel description').first().text();
-    const image = new URL('images/logo.png', rootUrl).href;
-
-    return {
-        title,
-        link: rootUrl,
-        description,
-        image,
-        author,
-        allowEmpty: true,
-        item: items,
-    };
-};
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/news-release',
@@ -70,9 +24,39 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['ncc.gov.tw/rss.ashx'],
+            source: ['https://www.ncc.gov.tw/chinese/rss/news.aspx?sn_f=8'],
             target: '/news-release',
         },
     ],
     view: undefined,
 };
+
+async function handler() {
+    const currentUrl = 'https://www.ncc.gov.tw/chinese/rss/news.aspx?sn_f=8';
+
+    const response = await got({
+        method: 'get',
+        url: currentUrl,
+    });
+
+    const $ = load(response.data, { xmlMode: true });
+
+    const items = $('item')
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
+            return {
+                title: $item.find('title').text(),
+                link: $item.find('link').text(),
+                description: $item.find('description').text() || '',
+                author: $item.find('author').text() || '外交部',
+                pubDate: parseDate($item.find('pubDate').text()),
+            };
+        });
+
+    return {
+        title: $('channel > title').first().text() || '新聞稿 - 外交部',
+        link: $('channel > link').first().text() || currentUrl,
+        item: items,
+    };
+}

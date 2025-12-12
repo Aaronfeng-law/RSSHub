@@ -1,6 +1,8 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/clarification',
@@ -18,6 +20,7 @@ export const route: Route = {
     radar: [
         {
             source: ['cec.gov.tw/'],
+            target: ['/clarification'],
         },
     ],
     name: '即時新聞澄清',
@@ -34,26 +37,24 @@ async function handler() {
         url: currentUrl,
     });
 
-    const $ = load(response.data);
+    const $ = load(response.data, { xmlMode: true });
 
-    const items = $('.list ul li')
+    const items = $('item')
         .toArray()
         .map((item) => {
             const $item = $(item);
-            const $a = $item.find('a');
-            const title = $a.text().trim();
-            const link = $a.attr('href');
-
             return {
-                title,
-                link: link ? new URL(link, currentUrl).href : currentUrl,
-                description: title,
+                title: $item.find('title').text(),
+                link: $item.find('link').text(),
+                description: $item.find('description').text(),
+                author: $item.find('author').text() || '中央選舉委員會',
+                pubDate: parseDate($item.find('pubDate').text()),
             };
         });
 
     return {
-        title: '即時新聞澄清 - 中央銀行',
-        link: currentUrl,
+        title: $('channel title').text() || '即時新聞澄清 - 中央選舉委員會',
+        link: $('channel link').text() || currentUrl,
         item: items,
     };
 }

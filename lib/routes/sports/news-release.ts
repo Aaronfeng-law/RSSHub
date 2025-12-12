@@ -1,65 +1,14 @@
-import { Route } from '@/types';
-import { parseDate } from '@/utils/parse-date';
-import got from '@/utils/got';
 import { load } from 'cheerio';
 
-const handler = async (ctx) => {
-    const limit = ctx.req.query('limit') ? Number.parseInt(ctx.req.query('limit'), 10) : 30;
-
-    const rootUrl = 'https://www.sa.gov.tw';
-    const currentUrl = new URL('rss.ashx', rootUrl).href;
-
-    const { data: response } = await got(currentUrl);
-
-    const $ = load(response, { xml: true });
-
-    const items = $('item')
-        .slice(0, limit)
-        .toArray()
-        .map((item) => {
-            const $item = $(item);
-
-            const title = $item.find('title').text();
-            const link = $item.find('link').text();
-            const description = $item.find('description').text();
-            const author = $item.find('author').text();
-            const pubDate = $item.find('pubDate').text();
-
-            return {
-                title,
-                link,
-                description,
-                author,
-                pubDate: parseDate(pubDate),
-            };
-        });
-
-    const author = '運動部';
-    const title = $('channel title').first().text();
-    const description = $('channel description').first().text();
-    const image = new URL('images/logo.png', rootUrl).href;
-
-    return {
-        title,
-        link: rootUrl,
-        description,
-        image,
-        author,
-        allowEmpty: true,
-        item: items,
-    };
-};
+import type { Route } from '@/types';
+import got from '@/utils/got';
+import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
     path: '/news-release',
-    name: '新聞稿',
-    url: 'sa.gov.tw',
-    maintainers: ['Aaron'],
-    handler,
-    example: '/sports/news-release',
-    parameters: undefined,
-    description: undefined,
     categories: ['government'],
+    example: '/sports/news-release',
+    parameters: {},
     features: {
         requireConfig: false,
         requirePuppeteer: false,
@@ -70,9 +19,42 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['sa.gov.tw/rss.ashx'],
+            source: ['sports.gov.tw/'],
             target: '/news-release',
         },
     ],
-    view: undefined,
+    name: '新聞專區',
+    maintainers: ['Aaron'],
+    handler,
+    url: 'sports.gov.tw/',
 };
+
+async function handler() {
+    const currentUrl = 'https://siteapi.sports.gov.tw/1/News/309?handler=OpenDataRSS';
+
+    const response = await got({
+        method: 'get',
+        url: currentUrl,
+    });
+
+    const $ = load(response.data, { xmlMode: true });
+
+    const items = $('item')
+        .toArray()
+        .map((item) => {
+            const $item = $(item);
+            return {
+                title: $item.find('title').text(),
+                link: $item.find('link').text(),
+                description: $item.find('description').text(),
+                author: $item.find('author').text() || '運動部',
+                pubDate: parseDate($item.find('pubDate').text()),
+            };
+        });
+
+    return {
+        title: $('channel title').text() || '新聞專區 - 運動部',
+        link: $('channel link').text() || currentUrl,
+        item: items,
+    };
+}

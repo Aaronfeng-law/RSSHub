@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -19,6 +20,7 @@ export const route: Route = {
     radar: [
         {
             source: ['ftc.gov.tw/'],
+            target: ['/news-release'],
         },
     ],
     name: '新聞稿',
@@ -28,7 +30,7 @@ export const route: Route = {
 };
 
 async function handler() {
-    const currentUrl = 'https://www.ftc.gov.tw/rss.ashx';
+    const currentUrl = 'https://www.ftc.gov.tw/internet/main/rss/rss.aspx?rssid=1';
 
     const response = await got({
         method: 'get',

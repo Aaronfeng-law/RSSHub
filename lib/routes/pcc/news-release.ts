@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -19,6 +20,7 @@ export const route: Route = {
     radar: [
         {
             source: ['pcc.gov.tw/'],
+            target: '/news-release',
         },
     ],
     name: '新聞稿',

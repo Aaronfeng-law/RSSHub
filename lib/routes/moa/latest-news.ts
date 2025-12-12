@@ -1,6 +1,7 @@
-import { Route } from '@/types';
-import got from '@/utils/got';
 import { load } from 'cheerio';
+
+import type { Route } from '@/types';
+import got from '@/utils/got';
 import { parseDate } from '@/utils/parse-date';
 
 export const route: Route = {
@@ -18,7 +19,8 @@ export const route: Route = {
     },
     radar: [
         {
-            source: ['moa.gov.tw/'],
+            source: ['https://www.moa.gov.tw/open_data.php?format=rss&func=news_hot'],
+            target: '/latest-news',
         },
     ],
     name: '最新消息',
